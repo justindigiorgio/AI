@@ -1,4 +1,14 @@
 import numpy as np
+import sys, os
+
+
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
 
 def unifs(n):
     """
@@ -7,23 +17,50 @@ def unifs(n):
     return [np.random.uniform() for i in range(n)]
 
 class NN:
-    def __init__(self, xi, yi, layers=[2,1]):
+    def __init__(self, ninput, layers=[2,1]):
         self.layers = layers
-        self.xi = xi
-        self.yi = yi
+        self.ninput = ninput
         # There is a +1 here to each of the weights because we introduce the bias as a weight.
         # When we take calculate the next layer, we just add a [1] to the front of the vector to take the dot product.
-        edges = [len(xi)+1] + [i + 1 for i in layers[:-1]]
+        edges = [ninput+1] + [i + 1 for i in layers[:-1]]
         print("edges: ", edges)
         self.nodes = [[Node(edges[i]) for j in range(layers[i])] for i in range(len(layers))]
         self.yi_hat = False
 
-    def reweight(self, yhat, y):
-        assert(len(yhat) == len(y))
-        loss = rho(y,yhat)
-        pass
+    def reweight(self, y):
+        # Preamble
+        assert self.yi_hat
+        yi_hat = self.yi_hat
+        assert (len(yi_hat) == len(y))
+        layers = self.layers
+        nlayers = len(layers)
+        yi_hat = self.yi_hat
+
+        # Functionality
+        activs = [[node.a for node in layer] for layer in self.nodes]
+        loss = rho(y, yi_hat)
+        errors = []
+        deltaij = 0
+        for i in [nlayers - i - 1 for i in range(nlayers)]: # for each layer
+            layer_errors = []
+            if i == 1:
+                delta
+                continue
+
+            if i == nlayers - 1:
+                continue
+
+            for j in range(layers[i]): # for each node in layer_i
+
+                layer_errors.append(deltaij)
+
+            errors.append(layer_errors)
+        print(errors)
+        return 0
+
 
     def calcNetwork(self, x):
+        assert(len(x) == self.ninput)
         layers = self.layers
         nodes = self.nodes
         print(nodes)
@@ -36,11 +73,12 @@ class NN:
                 print("Prev layer", i, j,"; ", prev_layer)
                 print("weights", nodes[i][j].t)
                 z = np.dot(prev_layer, nodes[i][j].t)
+                nodes[i][j].z = z
                 print(sig(z))
                 nodes[i][j].a = sig(z)
-        m = len(layers)
-        self.yi_hat = layers[m-1]
-        return layers[m-1]
+        yhat = [n.a for n in nodes[-1]]
+        self.yi_hat = yhat
+        return yhat
 
     def last_layer(self):
         return 0
@@ -56,6 +94,7 @@ class Node:
             self.t = theta
         else:
             self.t = [np.random.uniform() for i in range(n)]
+        self.z = 0
         self.a = 0
 
     def __repr__(self):
@@ -68,7 +107,7 @@ class Node:
 
 def rho(y, yhat):
     assert(len(y) == len(yhat))
-    return sum([(y[i] - yhat[i])^2 for i in range(len(y))])
+    return sum([(y[i] - yhat[i])**2 for i in range(len(y))])
 
 def sig(x):
     return 1/(1+np.exp(-x))
@@ -80,8 +119,11 @@ def main():
     np.random.seed(20885914)
     x = [[0,0], [0,1], [1,0], [1,1]]
     y = [0,1,1,0]
-    netwrk = NN([0,1],1)
-    netwrk.calcNetwork([0,1])
+    netwrk = NN(2)
+    blockPrint()
+    yhat = netwrk.calcNetwork([0,1])
+    enablePrint()
+    netwrk.reweight([0])
 
 if __name__ == "__main__":
     main()
